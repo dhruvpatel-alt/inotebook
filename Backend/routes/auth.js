@@ -5,8 +5,8 @@ const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 const jwtsecret="DHruv PATel is gen!us"
-
-//Create a user using post "/api/auth/" does not require authincation
+const fetchuser=require('../middleware/fetchUser');
+//ROUTE 1:  Create a user using post "/api/auth/" does not require authincation
 //IF THERE ARE ERROR MAKE ERROR VISIBLE
 router.post('/createuser',[
    body('email','Enter a valid email').isEmail(),
@@ -42,10 +42,8 @@ router.post('/createuser',[
    }
    //  }).then(user => res.json(user)).catch(err=>{console.log(err)
   
-//Login for user using post "/api/auth/login" LOGIN page
-
-
 })
+//ROUTE 2: Login for user using post "/api/auth/login" LOGIN page
 router.post('/login',[
    body('email','Invalid Email for Login').isEmail(),
    body('password','Password cannot be blank').exists(),
@@ -68,8 +66,21 @@ router.post('/login',[
       const token = jwt.sign(data, jwtsecret);
        res.json({token});
    } catch (error) {
-      console.error(error.message());
+      console.error(error);
       res.status(500).send("Internal Error occurs")
    }
 })
+//ROUTE 3: Get user Detali  thorugh login for user using post "/api/auth/getuser" After LOGIN page
+router.post('/getuser',fetchuser,async (req,res)=>{
+
+   try {
+      userid=req.user.id;
+      const user = await User.findById(userid).select("-password");
+      res.send(user);
+   } catch (error) {
+      console.error(error);
+      res.status(500).send("Internal Error occurs")
+   }
+})
+
 module.exports=router;
