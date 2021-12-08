@@ -15,8 +15,10 @@ router.post('/createuser',[
 ],async (req,res)=>{
    console.log(req.body);
    const errors = validationResult(req);
+let already=false;
+   let success=false;
    if (!errors.isEmpty()) {
-     return res.status(400).json({ errors: errors.array() });
+     return res.status(400).json({success, errors: errors.array() });
    }
    // let user=User.findOne({email:req.body.email});
    // if(user)
@@ -26,7 +28,8 @@ router.post('/createuser',[
       const secpass=await bcrypt.hash(req.body.password,salt);
       let user=await User.findOne({email:req.body.email});
       if(user){
-         return res.status(400).json({error:"Email already exists "})
+         already=true;
+         return res.status(400).json({already,success,error:"Email already exists "})
       }
     user=await User.create({
       name: req.body.name,
@@ -35,7 +38,8 @@ router.post('/createuser',[
       const data={user:{id:user.id}};
      const token = jwt.sign(data, jwtsecret);
      console.log(token);
-      res.json({token});}
+     success=true;
+      res.json({success,token});}
       catch (error) {
       console.error(error);
       res.status(500).send("SOME ERROR OCCUR");
@@ -49,14 +53,15 @@ router.post('/login',[
    body('password','Password cannot be blank').exists(),
 ],async (req,res)=>{
    const errors = validationResult(req);
+  let success=false;
    if (!errors.isEmpty()) {
-     return res.status(400).json({ errors: errors.array()});
+     return res.status(400).json({ success,errors: errors.array()});
    }
    const {email,password}=req.body;
    try {
       let user=await User.findOne({email:req.body.email});
       if(!user){
-         return res.status(400).json({error:"Please try to login with correct Credentials"})
+         return res.status(400).json({success,error:"Please try to login with correct Credentials"})
       }
       const comparepass=await bcrypt.compare(password,user.password);
       if(!comparepass){
@@ -64,7 +69,8 @@ router.post('/login',[
       }
       const data={user:{id:user.id}};
       const token = jwt.sign(data, jwtsecret);
-       res.json({token});
+      success=true;
+       res.json({success,token});
    } catch (error) {
       console.error(error);
       res.status(500).send("Internal Error occurs")
